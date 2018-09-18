@@ -1,0 +1,106 @@
+#!/bin/ash
+#161123 sfs
+t1="WiFi точка доступа"
+t="Раздача интернета с проводного 
+интерфейса (или модема) через WiFi"
+ e="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}'`"
+e1="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
+[ "$e" = "$e1" ] || e2="$e"
+
+ w="`iwconfig | awk '/^[a-z]/ && !/lo/ {print $1}'`"
+w1="`iwconfig | awk '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
+[ "$w" = "$w1" ] || w2="$w"
+
+#e1="`echo $e |head -1`"
+#echo "$e $e1" ;exit
+
+Y(){
+yad --title="$t1" \
+    --text="$t" \
+    --image="wireless" \
+    --window-icon="/usr/share/pixmaps/wireless.svg" \
+    --fixed --image-on-top --center \
+    --field=gtk-help:BTN 'defaultbrowser "https://github.com/oblique/create_ap"' \
+    --form \
+    --field="Интернет $e2" "$e1" \
+	--field=:LBL '' \
+    --field="WiFi интерфейс $w2" "$w1" \
+    --field="Имя сети (ESSID)" "wifipra" \
+    --field="Пароль:H" \
+    --button="Старт"!media-play!:0 \
+    --button=gtk-cancel:2  
+#    --XXfield="часов:NUM" "0!1..60!2!2" \
+#    --XXfield="запрос пароля для возобновления работы!lock:BTN" 'bash -c "pass.sh &"'\
+#    --separator='\n' 
+#    | sudo passwd "$U" #>/dev/null
+}
+s="$HOME/.config/autostart/dpms.desktop"
+#p="/home/`sfsusr`/.config/pass.conf"
+#. "$p"
+#echo $e
+a=create_ap
+y="`Y`" || exit
+wf="`echo "$y"| awk -F"|" '{print $4}'`"
+#echo wf=$wf
+t3="На WiFi интерфейсе '$wf' 
+запушена точка доступа.
+Нажмите для остановки"
+`echo "$y"| awk -F"|" '{print "'$a' "$4" "$2" "$5" "$6}'` && \
+    yad --notification --image=wireless --text="$t3" --command='bash -c "'$a' --stop '$wf' & kill $YAD_PID"'
+
+
+exit
+    yad --notification --image=wireless --text="sdd ss" --command='bash -c "'$a' --stop `echo "$y"| awk -F"|" '{print $4}'` \
+    & kill $YAD_PID"'
+exit
+    --field="запрос пароля для возобновления работы:CHK" "$ssaver"\
+    --button="Старт"!media-play!"Запрос пароля для возобновления работы":0 \
+    --button=gtk-media-play:0  \
+    --button=gtk-ok:0  \
+    --field="ждущий режим при закрытии крышки ноутбука:LBL" \
+    --XXfield="минут:SCL" "1|2|3"\
+    --XXfield="часов:NUM" "$2"\
+    --XXfield="сохранить это время после перезагрузки:CHK" "$3"\
+
+[ -f "$s" ] && f=TRUE
+y="$(Y `xset -q |awk '/timeout: / {print ($2-(int($2/60/60)*60*60))/60" "int($2/60/60)}'` $f)" #|| exit
+r="$?"
+echo "11 $y $r"
+#[ "$r" = "2" ] && exit
+case $r in
+    3) pass.sh 
+	$0 &
+    ;;
+    4) defaultbrowser "https://wiki.archlinux.org/index.php/Display_Power_Management_Signaling" ;;
+#    2) exit  ;;
+    0) 
+d="`echo $y |awk -F"|" '{print int($1*60+$2*60*60)}'`"
+if [ $d -lt 60 ];then
+    ntf -a "Не рекомендуется автогашение экрана менее минуты" "Увеличьте..." 
+    ($0 & );  exit
+fi
+#ntf -i " $d"
+SET $d
+A(){
+mkdir -p "`dirname "$s"`"
+echo "\
+[Desktop Entry]
+Type=Application
+Icon=screen_resolution
+Name=DPMS
+Name[ru]=Время гашения экрана $d (сек.)
+Comment[ru]=Управление гашением экрана при простое
+Exec=dpms $d 
+" > "$s"
+}
+echo $y
+[ "`echo $y |awk -F"|" '{print $3}'`" = "TRUE" ] && A || rm "$s"
+
+sed -i 's/ssaver=true//' "$p"
+[ "`echo $y |awk -F"|" '{print $4}'`" = "TRUE" ] && echo "ssaver=true" >> $p
+
+sed -i 's/close=true//' "$p"
+[ "`echo $y |awk -F"|" '{print $6}'`" = "TRUE" ] && echo "close=true" >> $p
+	;;
+    *) exit ;;
+esac
