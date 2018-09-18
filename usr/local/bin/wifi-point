@@ -1,8 +1,5 @@
 #!/bin/ash
-#161123 sfs
-t1="WiFi точка доступа"
-t="Раздача интернета с проводного 
-интерфейса (или модема) через WiFi"
+#180918 sfs
  e="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}'`"
 e1="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
 [ "$e" = "$e1" ] || e2="$e"
@@ -14,9 +11,9 @@ w1="`iwconfig | awk '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
 #e1="`echo $e |head -1`"
 #echo "$e $e1" ;exit
 
-Y(){
-yad --title="$t1" \
-    --text="$t" \
+GUI(){
+yad --title="WiFi точка доступа" \
+    --text="Раздача интернета с проводного \nинтерфейса (или модема) через WiFi" \
     --image="wireless" \
     --window-icon="/usr/share/pixmaps/wireless.svg" \
     --fixed --image-on-top --center \
@@ -39,11 +36,11 @@ s="$HOME/.config/autostart/dpms.desktop"
 #. "$p"
 #echo $e
 a=create_ap
-y="`Y`" || exit
+y="`GUI`" || exit
 wf="`echo "$y"| awk -F"|" '{print $4}'`"
 #echo wf=$wf
 t3="На WiFi интерфейсе '$wf' 
-запушена точка доступа.
+запущена точка доступа.
 Нажмите для остановки"
 `echo "$y"| awk -F"|" '{print "'$a' "$4" "$2" "$5" "$6}'` && \
     yad --notification --image=wireless --text="$t3" --command='bash -c "'$a' --stop '$wf' & kill $YAD_PID"'
