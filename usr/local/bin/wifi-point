@@ -52,7 +52,8 @@ fi
 wf="`echo "$y"| awk -F"|" '{print $4}'`"
  a="`echo "$y"| awk -F"|" '{print $8}'`"
  v="`echo "$y"| awk -F"|" '{print $7}'`" ; [ "$v" = "TRUE" ] && v="--no-virt" ||v=
-c2="sudo create_ap `echo "$y"| awk -F"|" '{print $4" "$2" "$5" "$6}'` $v --daemon"
+ [ `echo "$y"| awk -F"|" '{print $2}' ] && no_share="" || no_share="-n"
+c2="sudo create_ap $no_share `echo "$y"| awk -F"|" '{print $4" "$2" "$5" "$6}'` $v --daemon"
 
 A(){
 mkdir -p "`dirname "$s"`"
