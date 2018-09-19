@@ -42,3 +42,116 @@ if [ -f "$s" ] ;then
     p="TRUE `awk -FExec= '/^Exec=/ {print $2}' "$s" |sed 's/^sudo create_ap //'`"
     y="`Y $p`" || exit
 else
+     e="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}'`"
+    e1="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
+    [ "$e" = "$e1" ] || e2="$e" ;export e2="$e"
+
+     w="`iwconfig | awk '/^[a-z]/ && !/lo/ {print $1}'`"
+    w1="`iwconfig | awk '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
+    [ "$w" = "$w1" ] || w2="$w" ;export w2="$w"
+
+    echo FALSE $e1 $w1 wifipra
+    y="`Y FALSE "$e1" "$w1" wifipra TRUE`" || exit
+fi
+
+#echo $y ;exit
+wf="`echo "$y"| awk -F"|" '{print $4}'`"
+# k="`echo "$y"| awk -F"|" '{print $8}'`"
+ a="`echo "$y"| awk -F"|" '{print $8}'`"
+ v="`echo "$y"| awk -F"|" '{print $7}'`" ; [ "$v" = "TRUE" ] && v="--no-virt" ||v=
+#c=create_ap
+c2="sudo create_ap `echo "$y"| awk -F"|" '{print $4" "$2" "$5" "$6}'` $v --daemon"
+#$c2 --mkconfig "$HOME/.config/.wifi-point.conf"
+#c2="`which sudo` echo $k"
+#echo -"$st"-  wf=$wf k=$k;exit
+
+A(){
+mkdir -p "`dirname "$s"`"
+echo "\
+[Desktop Entry]
+Type=Application
+Icon=wireless
+Name=WiFi point
+Name[ru]=WiFi точка доступа
+Comment[ru]=`echo $t`
+Exec=inet-test 20 $c2
+" > "$s"
+}
+if [ "$a" = "TRUE" ];then
+    ntf -q "Добавить в автозагрузку системы запуск :" "$c2 ?
+
+Пароль будет сохранен в открытом виде.
+Можно зашифровать файл сохранения." && A 
+else  
+    [ -f "$s" ] && wt "rm $s" 
+fi
+#exit
+t3="На WiFi интерфейсе '$wf' 
+запушена точка доступа.
+"
+#echo $c2 ;exit
+#wt -o "$c2 --daemon" 
+#err="`$c2 &`"
+#x="$?" ; ntf -i  "x=$x"
+$c2 2&>/tmp/wifi-point
+sleep 2
+x="`create_ap --list-running |wc -l`"
+#echo x=$x
+if [ "$x" -gt "2" ];then
+    ntf -i "$t3 " "Остановить можно через иконку в трее" &
+    yad --notification --image=wireless --text="$t3 Нажмите для остановки" --command='bash -c "sudo create_ap --stop '$wf' & kill $YAD_PID"'
+    ntf -i "На WiFi интерфейсе '$wf'" "точка доступа остановлена" &
+else	
+    ntf -a "Ошибка wifi-point" "`cat /tmp/wifi-point` " 
+    #wt -o "$c2" 
+    ($0 &) ; exit 1
+fi
+exit
+
+
+
+
+    yad --notification --image=wireless --text="sdd ss" --command='bash -c "'$a' --stop `echo "$y"| awk -F"|" '{print $4}'` \
+    & kill $YAD_PID"'
+exit
+
+
+    --field="запрос пароля для возобновления работы:CHK" "$ssaver"\
+    --button="Старт"!media-play!"Запрос пароля для возобновления работы":0 \
+    --button=gtk-media-play:0  \
+    --button=gtk-ok:0  \
+    --field="ждущий режим при закрытии крышки ноутбука:LBL" \
+    --XXfield="минут:SCL" "1|2|3"\
+    --XXfield="часов:NUM" "$2"\
+    --XXfield="сохранить это время после перезагрузки:CHK" "$3"\
+
+[ -f "$s" ] && f=TRUE
+y="$(Y `xset -q |awk '/timeout: / {print ($2-(int($2/60/60)*60*60))/60" "int($2/60/60)}'` $f)" #|| exit
+r="$?"
+echo "11 $y $r"
+#[ "$r" = "2" ] && exit
+case $r in
+    3) pass.sh 
+	$0 &
+    ;;
+    4) defaultbrowser "https://wiki.archlinux.org/index.php/Display_Power_Management_Signaling" ;;
+#    2) exit  ;;
+    0) 
+d="`echo $y |awk -F"|" '{print int($1*60+$2*60*60)}'`"
+if [ $d -lt 60 ];then
+    ntf -a "Не рекомендуется автогашение экрана менее минуты" "Увеличьте..." 
+    ($0 & );  exit
+fi
+#ntf -i " $d"
+SET $d
+echo $y
+[ "`echo $y |awk -F"|" '{print $3}'`" = "TRUE" ] && A || rm "$s"
+
+sed -i 's/ssaver=true//' "$p"
+[ "`echo $y |awk -F"|" '{print $4}'`" = "TRUE" ] && echo "ssaver=true" >> $p
+
+sed -i 's/close=true//' "$p"
+[ "`echo $y |awk -F"|" '{print $6}'`" = "TRUE" ] && echo "close=true" >> $p
+	;;
+    *) exit ;;
+esac
