@@ -1,51 +1,44 @@
 #!/bin/ash
 #180918 sfs
- e="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}'`"
-e1="`ifconfig | awk -F: '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
-[ "$e" = "$e1" ] || e2="$e"
+[ ! "`iw list |egrep "* AP$"`" ] && ntf -a "Wifi-point" "Ваш wifi адаптер не поддерживает режим AP" && exit 1
+x="`create_ap --list-running |wc -l`"
+#echo x=$x
+t1="WiFi точка доступа"
+t="Раздача интернета с проводного 
+(модема, WiFi) интерфейса  через WiFi
+<small>Некоторые wifi поддерживают ретрансляцию
+укажите 2 раза wifi-интерфейс</small>"
 
- w="`iwconfig | awk '/^[a-z]/ && !/lo/ {print $1}'`"
-w1="`iwconfig | awk '/^[a-z]/ && !/lo/ {print $1}' |head -1`"
-[ "$w" = "$w1" ] || w2="$w"
+if [ "$x" -gt "2" ];then
+    ntf -q "$t1 уже запущена" "`create_ap --list-running`
+Остановить?" && wt "sudo create_ap --stop `create_ap --list-running| tail -1 |awk '{print $2}'`" 
+fi
 
-#e1="`echo $e |head -1`"
-#echo "$e $e1" ;exit
-
-GUI(){
-yad --title="WiFi точка доступа" \
-    --text="Раздача интернета с проводного \nинтерфейса (или модема) через WiFi" \
+Y(){
+yad --title="$t1 v.$v" \
+    --text="$t" \
     --image="wireless" \
     --window-icon="/usr/share/pixmaps/wireless.svg" \
     --fixed --image-on-top --center \
     --field=gtk-help:BTN 'defaultbrowser "https://github.com/oblique/create_ap"' \
     --form \
-    --field="Интернет $e2" "$e1" \
+    --field="Интернет $e2" "$2" \
 	--field=:LBL '' \
-    --field="WiFi интерфейс $w2" "$w1" \
-    --field="Имя сети (ESSID)" "wifipra" \
-    --field="Пароль:H" \
+    --field="WiFi интерфейс $w2" "$3" \
+    --field="Имя сети (ESSID)" "$4" \
+    --field="Пароль (>=8 знаков):H" "$6"\
+    --field="--no-virt:CHK" "$5"\
+    --field="запускать при старте системы:CHK" "$1" \
     --button="Старт"!media-play!:0 \
     --button=gtk-cancel:2  
+#    --field="Доп. параметры" "${6} $7 $8 $9 $10"\
 #    --XXfield="часов:NUM" "0!1..60!2!2" \
 #    --XXfield="запрос пароля для возобновления работы!lock:BTN" 'bash -c "pass.sh &"'\
 #    --separator='\n' 
 #    | sudo passwd "$U" #>/dev/null
 }
-s="$HOME/.config/autostart/dpms.desktop"
-#p="/home/`sfsusr`/.config/pass.conf"
-#. "$p"
-#echo $e
-a=create_ap
-y="`GUI`" || exit
-wf="`echo "$y"| awk -F"|" '{print $4}'`"
-#echo wf=$wf
-t3="На WiFi интерфейсе '$wf' 
-запущена точка доступа.
-Нажмите для остановки"
-`echo "$y"| awk -F"|" '{print "'$a' "$4" "$2" "$5" "$6}'` && \
-    yad --notification --image=wireless --text="$t3" --command='bash -c "'$a' --stop '$wf' & kill $YAD_PID"'
-
-
-exit
-
-
+s="$HOME/.config/autostart/wifi-point.desktop"
+if [ -f "$s" ] ;then
+    p="TRUE `awk -FExec= '/^Exec=/ {print $2}' "$s" |sed 's/^sudo create_ap //'`"
+    y="`Y $p`" || exit
+else
